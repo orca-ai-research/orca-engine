@@ -1,0 +1,4 @@
+src/models
+src/vocab.txt
+src/__pycache__
+*.log
