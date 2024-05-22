@@ -1,6 +1,7 @@
-from engine import generate_word
+from lib.engine import generate_word
 import pickle
 import random
+from lib.vocab_reader import get_vocab
 
 embedding_dim = 1228
 vocab_size = 3668
@@ -34,12 +35,16 @@ class Model:
 
 
 def rand_arr(dim):
-    return [[random.uniform(-1, 1) for _ in range(dim[1])] for _ in range(dim[0])]
+    if len(dim) == 1:
+        return [random.random() for _ in range(dim[0])]
+    elif len(dim) == 2:
+        return [[random.random() for _ in range(dim[1])] for _ in range(dim[0])]
+    else:
+        raise ValueError("Invalid dimension: must be 1 or 2 dimensions")
 
 
 def make_model(model_id):
-    with open("vocab.txt", "r") as f:
-        vocab = f.read().splitlines()
+    vocab = get_vocab()
 
     embedding_dict = {}
 

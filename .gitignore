@@ -1,4 +1,7 @@
-src/models
-src/vocab.txt
-src/__pycache__
+models
+lib/vocab.txt
+create.py
+main.py
+__pycache__
+lib/__pycache__
 *.log
