@@ -1,51 +1,51 @@
 import numpy as np
 import re
 
-def verify_model(model):
-    if model is None:
-        raise ValueError("Model is None")
+# def verify_model(model):
+#     if model is None:
+#         raise ValueError("Model is None")
 
-    if model.vocab_size <= 0:
-        raise ValueError("Model vocab size is 0 or negative")
+#     if model.vocab_size <= 0:
+#         raise ValueError("Model vocab size is 0 or negative")
 
-    if model.embedding_dim <= 0:
-        raise ValueError("Model embedding dim is 0 or negative")
+#     if model.embedding_dim <= 0:
+#         raise ValueError("Model embedding dim is 0 or negative")
 
-    if model.context_length <= 0:
-        raise ValueError("Model context length is 0 or negative")
+#     if model.context_length <= 0:
+#         raise ValueError("Model context length is 0 or negative")
     
-    if model.model_id is None:
-        raise ValueError("Model model_id is None")
+#     if model.model_id is None:
+#         raise ValueError("Model model_id is None")
     
-    if model.input_embedding_lookup is None:
-        raise ValueError("Model input_embedding_lookup is None")
+#     if model.input_embedding_lookup is None:
+#         raise ValueError("Model input_embedding_lookup is None")
     
-    if model.query_embedding_matrix is None:
-        raise ValueError("Model query_embedding_matrix is None")
+#     if model.query_embedding_matrix is None:
+#         raise ValueError("Model query_embedding_matrix is None")
     
-    if model.key_embedding_matrix is None:
-        raise ValueError("Model key_embedding_matrix is None")
+#     if model.key_embedding_matrix is None:
+#         raise ValueError("Model key_embedding_matrix is None")
     
-    if model.value_embedding_matrix is None:
-        raise ValueError("Model value_embedding_matrix is None")
+#     if model.value_embedding_matrix is None:
+#         raise ValueError("Model value_embedding_matrix is None")
     
-    if model.output_embedding_matrix is None:
-        raise ValueError("Model output_embedding_matrix is None")
+#     if model.output_embedding_matrix is None:
+#         raise ValueError("Model output_embedding_matrix is None")
     
-    if len(model.input_embedding_lookup) is not model.vocab_size:
-        raise ValueError("Model input_embedding_lookup length is not equal to vocab_size")
+#     if len(model.input_embedding_lookup) is not model.vocab_size:
+#         raise ValueError("Model input_embedding_lookup length is not equal to vocab_size")
     
-    if np.shape(model.query_embedding_matrix) is not (model.embedding_dim, model.embedding_dim):
-        raise ValueError("Model query_embedding_matrix length is not equal to embedding_dim")
+#     if np.shape(model.query_embedding_matrix) is not (model.embedding_dim, model.embedding_dim):
+#         raise ValueError("Model query_embedding_matrix length is not equal to embedding_dim")
     
-    if np.shape(model.key_embedding_matrix) is not (model.embedding_dim, model.embedding_dim):
-        raise ValueError("Model key_embedding_matrix length is not equal to embedding_dim")
+#     if np.shape(model.key_embedding_matrix) is not (model.embedding_dim, model.embedding_dim):
+#         raise ValueError("Model key_embedding_matrix length is not equal to embedding_dim")
     
-    if np.shape(model.value_embedding_matrix) is not (model.embedding_dim, model.embedding_dim):
-        raise ValueError("Model value_embedding_matrix length is not equal to embedding_dim")
+#     if np.shape(model.value_embedding_matrix) is not (model.embedding_dim, model.embedding_dim):
+#         raise ValueError("Model value_embedding_matrix length is not equal to embedding_dim")
     
-    if np.shape(model.output_embedding_matrix) is not (model.embedding_dim, model.embedding_dim):
-        raise ValueError("Model output_embedding_matrix length is not equal to embedding_dim")
+#     if np.shape(model.output_embedding_matrix) is not (model.embedding_dim, model.embedding_dim):
+#         raise ValueError("Model output_embedding_matrix length is not equal to embedding_dim")
 
 def output_embedding(input_seq, output_embedding_matrix):
     return [np.matmul(output_embedding_matrix, input_vec) for input_vec in input_seq]
@@ -77,7 +77,7 @@ def generate_word(
         str: The generated word.
     """
     
-    verify_model(model)
+    # verify_model(model)
     
     print("Input text: ", input_text)
     print("Temperature: ", temperature)
@@ -114,19 +114,7 @@ def generate_word(
     print("Length of output: ", len(output))
     print("Length of output_weights: ", len(output_weights))
 
-    closest_words = []
-
-    for matrix in output:
-        closest_word = None
-        closest_distance = np.Infinity
-        for word, vector in model.input_embedding_lookup.items():
-            distance = np.linalg.norm(np.array(matrix) - np.array(vector))
-            if distance < closest_distance:
-                closest_word = word
-                closest_distance = distance
-        closest_words.append(closest_word)
-
-    return random_choice(closest_words, output_weights, model.embedding_dim)
+    return random_choice(options=model.vocab, weights=output_weights, embedding_dim=model.embedding_dim)
 
 
 def input_embedding(input_text: str, input_embeddings):

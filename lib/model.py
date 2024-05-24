@@ -1,11 +1,11 @@
-from lib.engine import generate_word
+from engine import generate_word
 import pickle
 import random
-from lib.vocab_reader import get_vocab
+from vocab_reader import get_vocab
 
 embedding_dim = 1228
-vocab_size = 3668
 context_length = 1000
+
 
 class Model:
     def __init__(
@@ -19,6 +19,7 @@ class Model:
         embedding_dim: int,
         context_length: int,
         model_id: str,
+        vocab: list,
     ):
         self.input_embedding_lookup = input_embedding_lookup
         self.query_embedding_matrix = query_embedding_matrix
@@ -29,26 +30,40 @@ class Model:
         self.embedding_dim = embedding_dim
         self.context_length = context_length
         self.model_id = model_id
+        self.vocab = vocab
 
     def generate_word(self, input_text, temperature, attention_repition=1):
+        if self is None:
+            raise ValueError("Model is None")
+        if input_text is None:
+            raise ValueError("Input text is None")
+        if temperature <= 0:
+            raise ValueError("Temperature is 0 or negative")
+        if attention_repition < 0:
+            raise ValueError("Attention repetition is negative")
         return generate_word(input_text, self, temperature, attention_repition)
 
 
 def rand_arr(dim):
+    if len(dim) not in [1, 2]:
+        raise ValueError("Invalid dimension: must be 1 or 2 dimensions")
     if len(dim) == 1:
         return [random.random() for _ in range(dim[0])]
-    elif len(dim) == 2:
-        return [[random.random() for _ in range(dim[1])] for _ in range(dim[0])]
     else:
-        raise ValueError("Invalid dimension: must be 1 or 2 dimensions")
+        return [[random.random() for _ in range(dim[1])] for _ in range(dim[0])]
 
 
 def make_model(model_id):
     vocab = get_vocab()
 
+    if vocab is None:
+        raise ValueError("Vocab is None")
+
     embedding_dict = {}
 
-    for i in range(vocab_size):
+    for i in range(len(vocab)):
+        if i >= len(vocab):
+            raise ValueError("Vocab size is larger than the number of words")
         embedding_dict[vocab[i]] = rand_arr((embedding_dim, 1))
 
     query_embedding_matrix = rand_arr((embedding_dim, embedding_dim))
@@ -62,14 +77,19 @@ def make_model(model_id):
         key_embedding_matrix,
         value_embedding_matrix,
         output_embedding_matrix,
-        vocab_size,
+        len(vocab),
         embedding_dim,
         context_length,
         model_id,
+        vocab
     )
 
 
 def save_model(model: Model, filename: str):
+    if model is None:
+        raise ValueError("Model is None")
+    if filename is None:
+        raise ValueError("Filename is None")
     try:
         with open(filename, "wb") as file:
             pickle.dump(model, file)
@@ -79,6 +99,8 @@ def save_model(model: Model, filename: str):
 
 
 def load_model(filename: str) -> Model:
+    if filename is None:
+        raise ValueError("Filename is None")
     try:
         with open(filename, "rb") as file:
             obj = pickle.load(file)
@@ -87,3 +109,5 @@ def load_model(filename: str) -> Model:
     except Exception as e:
         print(f"Error occurred while loading the model: {e}")
         return None
+
+

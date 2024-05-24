@@ -1,7 +1,7 @@
-models
+lib/models
 lib/vocab.txt
-create.py
-main.py
+lib/create.py
+lib/main.py
 __pycache__
 lib/__pycache__
 *.log
