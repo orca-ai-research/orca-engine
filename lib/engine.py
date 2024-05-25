@@ -1,66 +1,6 @@
-import numpy as np
+import logging
 import re
-
-# def verify_model(model):
-#     if model is None:
-#         raise ValueError("Model is None")
-
-#     if model.vocab_size <= 0:
-#         raise ValueError("Model vocab size is 0 or negative")
-
-#     if model.embedding_dim <= 0:
-#         raise ValueError("Model embedding dim is 0 or negative")
-
-#     if model.context_length <= 0:
-#         raise ValueError("Model context length is 0 or negative")
-    
-#     if model.model_id is None:
-#         raise ValueError("Model model_id is None")
-    
-#     if model.input_embedding_lookup is None:
-#         raise ValueError("Model input_embedding_lookup is None")
-    
-#     if model.query_embedding_matrix is None:
-#         raise ValueError("Model query_embedding_matrix is None")
-    
-#     if model.key_embedding_matrix is None:
-#         raise ValueError("Model key_embedding_matrix is None")
-    
-#     if model.value_embedding_matrix is None:
-#         raise ValueError("Model value_embedding_matrix is None")
-    
-#     if model.output_embedding_matrix is None:
-#         raise ValueError("Model output_embedding_matrix is None")
-    
-#     if len(model.input_embedding_lookup) is not model.vocab_size:
-#         raise ValueError("Model input_embedding_lookup length is not equal to vocab_size")
-    
-#     if np.shape(model.query_embedding_matrix) is not (model.embedding_dim, model.embedding_dim):
-#         raise ValueError("Model query_embedding_matrix length is not equal to embedding_dim")
-    
-#     if np.shape(model.key_embedding_matrix) is not (model.embedding_dim, model.embedding_dim):
-#         raise ValueError("Model key_embedding_matrix length is not equal to embedding_dim")
-    
-#     if np.shape(model.value_embedding_matrix) is not (model.embedding_dim, model.embedding_dim):
-#         raise ValueError("Model value_embedding_matrix length is not equal to embedding_dim")
-    
-#     if np.shape(model.output_embedding_matrix) is not (model.embedding_dim, model.embedding_dim):
-#         raise ValueError("Model output_embedding_matrix length is not equal to embedding_dim")
-
-def output_embedding(input_seq, output_embedding_matrix):
-    return [np.matmul(output_embedding_matrix, input_vec) for input_vec in input_seq]
-
-def random_choice(options, weights, embedding_dim):
-    print("Length of options: ", len(options))
-
-    if len(options) == 1:
-        return options[0]
-
-    if len(options) != len(weights):
-        raise ValueError("Options and weights must have the same length")
-
-    return np.random.choice(options, p=np.reshape(weights, (embedding_dim)))
-
+import numpy as np
 
 def generate_word(
     input_text: str, model, temperature: float, attention_repition: int
@@ -77,14 +17,25 @@ def generate_word(
         str: The generated word.
     """
     
-    # verify_model(model)
-    
-    print("Input text: ", input_text)
-    print("Temperature: ", temperature)
-    print("Attention Repetition: ", attention_repition)
+    if model is None:
+        raise ValueError("Model is None")
+    if input_text is None:
+        raise ValueError("Input text is None")
+    if temperature <= 0:
+        raise ValueError("Temperature is 0 or negative")
+    if attention_repition < 0:
+        raise ValueError("Attention repetition is negative")
 
-    embedded_input = input_embedding(input_text, model.input_embedding_lookup)
-    
+    print("Input text:", input_text)
+    print("Temperature:", temperature)
+    print("Attention Repetition:", attention_repition)
+
+    try:
+        embedded_input = input_embedding(input_text, model.input_embedding_lookup)
+    except KeyError as e:
+        logging.error(f"KeyError: {e}")
+        raise
+
     new_embedded_input = []
     
     for i in embedded_input:
@@ -95,50 +46,65 @@ def generate_word(
         
     embedded_input = new_embedded_input
     
-    print("Length of embedded_input: ", len(embedded_input))
+    print("Length of embedded_input:", len(embedded_input))
 
     for _ in range(attention_repition):
-        current_output = attention(
-            embedded_input,
-            model.query_embedding_matrix,
-            model.key_embedding_matrix,
-            model.value_embedding_matrix,
-            temperature,
-        )
+        try:
+            current_output = attention(
+                embedded_input,
+                model.query_embedding_matrix,
+                model.key_embedding_matrix,
+                model.value_embedding_matrix,
+                temperature,
+            )
+        except Exception as e:
+            logging.error(f"Exception in attention: {e}")
+            raise
 
-    print("Length of current_output: ", len(current_output))
+    print("Length of current_output:", len(current_output))
 
     output = output_embedding(current_output, model.output_embedding_matrix)
     output_weights = softmax(output[len(output) - 1], temperature)
 
-    print("Length of output: ", len(output))
-    print("Length of output_weights: ", len(output_weights))
+    print("Length of output:", len(output))
+    print("Length of output_weights:", len(output_weights))
 
-    return random_choice(options=model.vocab, weights=output_weights, embedding_dim=model.embedding_dim)
+    return output_weights
 
 
 def input_embedding(input_text: str, input_embeddings):
     tokens = re.findall(r"\b\w+\b|[^\w\s{}|]|[{|ENDOFTEXT|}]", input_text.lower())
-    print("Tokens: ", tokens)
-    print("Length of tokens: ", len(tokens))
+
+    if input_embeddings is None:
+        raise ValueError("Input embeddings is None")
+
     embeddings = [input_embeddings.get(token, [0] * 1228) for token in tokens]
-    print("Length of embeddings: ", len(embeddings))
-    print("Embeddings: ", embeddings)
     return embeddings
 
 def softmax(arr, temperature):
     if temperature == 0:
         raise ValueError("Temperature cannot be 0")
-    return np.exp(np.array(arr) / temperature) / np.sum(
-        np.exp(np.array(arr) / temperature)
-    )
+
+    try:
+        return np.exp(np.array(arr) / temperature) / np.sum(
+            np.exp(np.array(arr) / temperature)
+        )
+    except Exception as e:
+        logging.error(f"Exception in softmax: {e}")
+        raise
 
 
 def get_queries(input_seq, query_embeddings):
+    if query_embeddings is None:
+        raise ValueError("Query embeddings is None")
+
     return [np.matmul(query_embeddings, input_vec) for input_vec in input_seq]
 
 
 def get_keys(input_seq, key_embeddings):
+    if key_embeddings is None:
+        raise ValueError("Key embeddings is None")
+
     return [np.matmul(key_embeddings, input_vec) for input_vec in input_seq]
 
 
@@ -147,6 +113,9 @@ def calculate_attention(queries, keys):
 
 
 def normalize_attention(attention, temperature):
+    if attention is None:
+        raise ValueError("Attention is None")
+
     normalized_attention = []
     for row in attention:
         normalized_row = []
@@ -157,6 +126,11 @@ def normalize_attention(attention, temperature):
 
 
 def apply_attention(input_seq, attention, value_embeddings):
+    if value_embeddings is None:
+        raise ValueError("Value embeddings is None")
+    if attention is None:
+        raise ValueError("Attention is None")
+
     updated_attention = []
     for attention_row, input_vec in zip(attention, input_seq):
         updated_attention_row = []
@@ -176,6 +150,13 @@ def attention(
     value_embeddings,
     temperature,
 ):
+    if query_embeddings is None:
+        raise ValueError("Query embeddings is None")
+    if key_embeddings is None:
+        raise ValueError("Key embeddings is None")
+    if value_embeddings is None:
+        raise ValueError("Value embeddings is None")
+
     queries = get_queries(input_seq, query_embeddings)
     keys = get_keys(input_seq, key_embeddings)
     attention = calculate_attention(queries, keys)
@@ -183,3 +164,9 @@ def attention(
     output = apply_attention(input_seq, normalized_attention, value_embeddings)
 
     return output
+
+def output_embedding(current_output, output_embeddings):
+    if output_embeddings is None:
+        raise ValueError("Output embeddings is None")
+
+    return np.matmul(output_embeddings, current_output)
