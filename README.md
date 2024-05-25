@@ -16,7 +16,7 @@ We use self-attention to model the relationships between words. A more in-depth 
 
 ### RMN
 
-The RMN (Refinemenet Matrix Network) layer is a new approach to the architechure. It is a neural network with each node not having a single number input or output but instead, a matrix. It is fine-tuned to refine and improve the embeddings of words with grammar in mind.
+The RMN (Refinement Matrix Network) layer is a new approach to the architechure. It is a neural network with each node having a matrix instead of a floating point number. It is used to refine possibly incorrect grammar.
 
 ### Output Embedding
 
